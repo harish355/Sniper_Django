@@ -102,23 +102,23 @@ WSGI_APPLICATION = 'Backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
-DATABASES= {
-    'default': 
-        {   'ENGINE': 'djongo', 
-            'NAME': 'RoboTrader', 
-            'CLIENT': 
-                {
-                'host': 'mongodb+srv://admin:Harish355_2021@robotrader.ztdth.mongodb.net/test?authSource=admin&replicaSet=atlas-i19lux-shard-0&readPreference=primary&ssl=true'
-                }
-        }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
+
+# DATABASES= {
+#     'default': 
+#         {   'ENGINE': 'djongo', 
+#             'NAME': 'RoboTrader', 
+#             'CLIENT': 
+#                 {
+#                 'host': 'mongodb+srv://admin:Harish355_2021@robotrader.ztdth.mongodb.net/test?authSource=admin&replicaSet=atlas-i19lux-shard-0&readPreference=primary&ssl=true'
+#                 }
+#         }
+# }
 
 
 # Password validation

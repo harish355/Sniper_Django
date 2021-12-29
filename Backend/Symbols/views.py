@@ -167,6 +167,10 @@ class Buy_Symbols(APIView):
                             Execution_Time=str(Order_status['ExchTimeStamp']))
                             cancel_obj.User=request.user
                             cancel_obj.save()
+                            return Response({
+                                'Status': '200',
+                                'Message': Status
+                            }, status=status.HTTP_201_CREATED)
                         else:
                             Status=str(Order_status['Status'])
                             Status = Status.replace("-","")
@@ -176,11 +180,15 @@ class Buy_Symbols(APIView):
                             open_obj.User=request.user
                             open_obj.save()
                             Symbols_obj.delete()
+                            return Response({
+                                'Status': '200',
+                                'Message': Status
+                            }, status=status.HTTP_201_CREATED)
 
                     
                     Resp = {
-                        'Status': '200',
-                        'Message': Status
+                        'Status': '300',
+                        'Message': message
                     }
                     return Response(Resp, status=status.HTTP_201_CREATED)
             Resp = {
@@ -190,7 +198,7 @@ class Buy_Symbols(APIView):
             return Response(Resp, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({
-                "Status":200,
+                "Status":500,
                 "Message":str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 

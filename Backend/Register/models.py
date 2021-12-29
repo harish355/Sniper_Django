@@ -1,7 +1,9 @@
+from enum import unique
 from django.db import models
 from django.contrib.auth.models import (
     BaseUserManager, AbstractBaseUser
 )
+
 
 
 class UserManager(BaseUserManager):
@@ -57,7 +59,7 @@ class Account(AbstractBaseUser):
     is_active = models.BooleanField(default=True)
     staff = models.BooleanField(default=False)  # a admin user; non super-user
     admin = models.BooleanField(default=False)  # a superuser
-    phone = models.IntegerField(null=True,unique=True)
+    phone = models.CharField(unique=True, max_length=10)
     # notice the absence of a "Password field", that is built in.
 
     USERNAME_FIELD = 'username'

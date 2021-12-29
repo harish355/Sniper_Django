@@ -21,24 +21,30 @@ class API_Data(APIView):
             api_key=request.data['api_key']
         except:
             return Response({"Message":"Invalid Data","Status":"400"}, status=status.HTTP_201_CREATED)
-        if(len(list(Api_table.objects.filter(User=request.user)))==0): 
+        try:
+            if(len(list(Api_table.objects.filter(User=request.user)))==0): 
 
-            if("Please generate API key" not in  str(get_encryption_key(get_user(userid,api_key)) )):
-                obj=Api_table(userid=userid,api_key=api_key,User=request.user)
-                obj.save()  
-                return Response({
-                "Message":"Api Key added",
-                "Status":"200"
-                }, status=status.HTTP_201_CREATED)
+                if("Please generate API key" not in  str(get_encryption_key(get_user(userid,api_key)) )):
+                    obj=Api_table(userid=userid,api_key=api_key,User=request.user)
+                    obj.save()  
+                    return Response({
+                    "Message":"Api Key added",
+                    "Status":"200"
+                    }, status=status.HTTP_201_CREATED)
+                else:
+                    return Response({
+                    "Message":"Enter A valid APi Key",
+                    "Status":"400"
+                    }, status=status.HTTP_201_CREATED)
             else:
                 return Response({
-                "Message":"Enter A valid APi Key",
-                "Status":"400"
-                }, status=status.HTTP_201_CREATED)
-        else:
+                        "Message":"Api Details already present"
+                    }, status=status.HTTP_201_CREATED)
+        except Exception as e:
             return Response({
-                    "Message":"Api Details already present"
-                }, status=status.HTTP_201_CREATED)
+                        'Status':400,
+                        "Message":str(e)
+                    }, status=status.HTTP_201_CREATED)
         
     def get(self, request):
         try:
@@ -91,11 +97,18 @@ class User_Api_SessionId(APIView):
         try:
             api_obj=Api_table.objects.get(User=request.user)
             user=get_user(api_obj.userid,api_obj.api_key)
-            Session_id=user.getEncryptionKey()['sessionID']
-            return Response({
+            Session_id=user.getEncryptionKey()
+            if("Please login" in Session_id):
+                return Response({
                 "Status":"200",
                 "Session":str(Session_id)
-            }, status=status.HTTP_201_CREATED)
+                }, status=status.HTTP_201_CREATED)
+            else:
+                Session_id=Session_id['sessionID']
+                return Response({
+                    "Status":"200",
+                    "Session":str(Session_id)
+                }, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({
                 "Message":str(e)
