@@ -31,15 +31,16 @@ class Cancel_open_order(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
         try:
             open_obj=OpenOrders.objects.get(Order_Number=Order_Number)
-            if(open_obj.Status.upper()=="OPEN"):
+            if("OPEN" in open_obj.Status.upper()):
                 Api_object=Api_table.objects.get(User=request.user)
                 User=get_user(Api_object.userid,Api_object.api_key)
-
-                token=User.get_scrips(symbol=open_obj.Chart_Symbol, exchange=[open_obj.Exchange])[0]["token"]
+                token=open_obj.Token_id
 
                 Message=cancel_order(User,open_obj.Exchange,open_obj.Order_Number,token)
+                print(Message)
                 Message=dict(Message)
                 if(Message['stat']=="ok" or Message['stat']=="Ok"):
+                    open_obj.delete()
                     return Response({
                         "Status":200,
                         "Message":"Open Order Cancelled"
@@ -47,11 +48,11 @@ class Cancel_open_order(APIView):
                 else:
                     return Response({
                         "Status":200,
-                        "Message":"Open Order Couldn't be cancelled"
+                        "Message":str(Message['emsg'])
                     }, status=status.HTTP_201_CREATED)
             return Response({
                         "Status":400,
-                        "Message":"Open Order Can not be cancelled"
+                        "Message":"This is not an Open Order"
                     }, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({
@@ -78,10 +79,12 @@ class Square_Off(APIView):
                 Api_object=Api_table.objects.get(User=request.user)
                 User=get_user(Api_object.userid,Api_object.api_key)
 
-                token=User.get_scrips(symbol=open_obj.Chart_Symbol, exchange=[open_obj.Exchange])[0]["token"]
                 msg=squareoff_positions(user=User,exchange=open_obj.Exchange,symbol=open_obj.Chart_Symbol,
                 qty=Quantity,pCode=pCode,
-                tokenno=token)
+                tokenno=open_obj.Token_id)
+                print(User,open_obj.Exchange,open_obj.Chart_Symbol,
+                Quantity,pCode,
+                open_obj.Token_id)
                 return Response({
                         "Status":200,
                         "Message":str(msg)
@@ -113,8 +116,8 @@ class Close_Open_Order(APIView):
             open_obj=OpenOrders.objects.get(Order_Number=Order_Number)
             Api_object=Api_table.objects.get(User=request.user)
             User=get_user(Api_object.userid,Api_object.api_key)
-            token=User.get_scrips(symbol=open_obj.Chart_Symbol, exchange=[open_obj.Exchange])[0]["token"]
-            msg=exitboorder(user=User,nestOrderNumber=Order_Number,symbolOrderId=token,status="OPEN")
+            token=open_obj.Token_id
+            msg=exitboorder(user=User,nestOrderNumber=Order_Number,symbolOrderId=token,status="YES")
             msg=dict(msg)
             if(msg['stat']=='Ok' or msg['stat']=='ok'):
                 if("NOrdNo" in msg.keys()):
@@ -123,17 +126,28 @@ class Close_Open_Order(APIView):
                     if(Order_status['Status']=="rejected"):
                         Status=str(Order_status['Status']+" "+Order_status['rejectionreason'])
                         Status = Status.replace("-","")
-                        cancel_obj=CanceledOrders(Chart_Symbol=o_obj.chart_sym,Quantity=o_obj.Quantity,
+                        cancel_obj=CanceledOrders(Chart_Symbol=open_obj.Chart_Symbol,Quantity=open_obj.Quantity,
                         Order_Number=orderNumber,status=Status,
                         Execution_Time=str(Order_status['ExchTimeStamp']))
                         cancel_obj.User=request.user
-                        cancel_obj.save()                                 
+                        cancel_obj.save()      
+                    return Response({
+                        "Status":200,
+                        "Message":str(msg)
+                    }, status=status.HTTP_201_CREATED)                           
             
                 else:
                         Resp = {
                             'Status': '200',
-                            'Message': "Order Failed"
-                            }
+                            'Message': str(msg)
+                        }
+                        return Response(Resp,status=status.HTTP_201_CREATED)
+            else:
+                return Response({
+                            "Status":200,
+                            "Message":str(msg)
+                        }, status=status.HTTP_201_CREATED) 
+                            
         except Exception as e:
             return Response({
                 "Status":400,

@@ -100,13 +100,36 @@ class User_Api_SessionId(APIView):
             Session_id=user.getEncryptionKey()
             if("Please login" in Session_id):
                 return Response({
-                "Status":"200",
+                "Status":"300",
                 "Session":str(Session_id)
                 }, status=status.HTTP_201_CREATED)
             else:
                 Session_id=Session_id['sessionID']
                 return Response({
                     "Status":"200",
+                    "User_id":str(api_obj.userid),
+                    "Session":str(Session_id)
+                }, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({
+                "Message":str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self,request):
+        try:
+            api_obj=Api_table.objects.get(User=request.user)
+            user=get_user(api_obj.userid,api_obj.api_key)
+            Session_id=user.getEncryptionKey()
+            if("Please login" in Session_id):
+                return Response({
+                "Status":"300",
+                "Session":str(Session_id)
+                }, status=status.HTTP_201_CREATED)
+            else:
+                Session_id=Session_id['sessionID']
+                return Response({
+                    "Status":"200",
+                    "User_id":str(api_obj.userid),
                     "Session":str(Session_id)
                 }, status=status.HTTP_201_CREATED)
         except Exception as e:

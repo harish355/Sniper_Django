@@ -2,6 +2,7 @@ from django.db import models
 from rest_framework import fields, serializers
 from .models import OpenOrders
 from CancelOrder.models import CanceledOrders
+from CloseOrder.models import CloseOrders
 
 class OpenOrderSerializer(serializers.ModelSerializer):
     class Meta:
@@ -14,8 +15,9 @@ class OpenOrderSerializer(serializers.ModelSerializer):
 
 class CloseOrderSerializer(serializers.ModelSerializer):
     class Meta:
-        model = OpenOrders
-        feilds = ['Order_Number', 'Chart_Symbol', 'Exit_at']
+        model = CloseOrders
+        feilds = '__all__'
+        exclude=['User']
 
 class CancelOrderSerializer(serializers.ModelSerializer):
     class Meta:

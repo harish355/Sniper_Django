@@ -14,7 +14,7 @@ class CloseOrder(APIView):
 
     def get(self, request):
         CloseObj = CloseOrders.objects.filter(User=request.user)
-        serialized_obj = OpenOrderSerializer(CloseObj, many=True)
+        serialized_obj = CloseOrderSerializer(CloseObj, many=True)
         return Response(serialized_obj.data)
 
 

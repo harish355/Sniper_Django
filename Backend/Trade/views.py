@@ -33,21 +33,23 @@ class Desktop_Trade(APIView):
                 value = request.data['value']
 
                 if("EXIT" not in order_type):
-                    Symbols_obj = Symbols.objects.filter(User=user.id)
+                    Symbols_obj = Symbols.objects.filter(User=user)
                     for obj in Symbols_obj:
                         if(obj.Terminal_Symbol==token_name):
                             Api_object=Api_table.objects.get(User=user)
                             User=get_user(Api_object.userid,Api_object.api_key)
                             exchange=Market_Choice[obj.Market]
                             token=obj.Token_id
-                            
+                            print(token)
+                            if(exchange=="NSE" or exchange=="BSE"):
+                                trading_symbol=obj.Chart_Symbol+"-EQ"
                             if("BUY" in order_type):
-                                message=place_order(user=User,ret="DAY",trading_symbol=token, exch=str(exchange), discqty=int(float(obj.Quantity)*0.1),
+                                message=place_order(user=User,ret="DAY",trading_symbol=trading_symbol, exch=str(exchange), discqty=int(float(obj.Quantity)*0.1),
                                 transtype="BUY", prctyp="L", qty=str(obj.Quantity), symbol_id=token, price=value, trigPrice="0", pCode="MIS", 
                                 complexty="REGULAR")
 
                             else:
-                                message=place_order(user=User,ret="DAY",trading_symbol=token, exch=str(exchange), discqty=str(obj.Quantity),
+                                message=place_order(user=User,ret="DAY",trading_symbol=trading_symbol, exch=str(exchange), discqty=str(obj.Quantity),
                                 transtype="SELL", prctyp="L", qty=str(obj.Quantity), symbol_id=token, price=value, trigPrice="0", pCode="MIS", 
                                 complexty="REGULAR")
                             
@@ -97,7 +99,7 @@ class Desktop_Trade(APIView):
                             if(o_obj.Terminal_Symbol==token_name):
                                 Api_object=Api_table.objects.get(User=user)
                                 User=get_user(Api_object.userid,Api_object.api_key)
-                                exchange=Market_Choice[obj.Market]
+                                exchange=Market_Choice[o_obj.Market]
                                 if("SUCCESS" in str(o_obj.Status).upper()):
                                     msg=squareoff_positions(user=User,exchange=o_obj.Exchange,symbol=o_obj.Chart_Symbol,
                                     qty=o_obj.Quantity,pCode="L",

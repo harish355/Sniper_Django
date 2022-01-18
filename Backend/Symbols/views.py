@@ -1,7 +1,7 @@
 import re
 from django.http import JsonResponse
 from .models import Symbols
-from .serializers import SymbolsSerializer
+from .serializers import SymbolsSerializer,Symbols_Get_Serializer
 from rest_framework.parsers import JSONParser
 from rest_framework import status
 from rest_framework.views import APIView
@@ -26,7 +26,7 @@ class Symbols_watch_list(APIView):
 
     def get(self, request):
         Symbols_list = Symbols.objects.filter(User=request.user)
-        serialized_obj = SymbolsSerializer(Symbols_list, many=True)
+        serialized_obj = Symbols_Get_Serializer(Symbols_list, many=True)
         return Response(serialized_obj.data)
 
     def post(self, request):
@@ -145,14 +145,16 @@ class Buy_Symbols(APIView):
                     User=get_user(Api_object.userid,Api_object.api_key)
                     exchange=Market_Choice[obj.Market]
                     token=obj.Token_id
-
-                    message=place_order(user=User,ret="DAY",trading_symbol=token, exch=str(exchange), discqty=int(float(obj.Quantity)*0.1),
+                    if(exchange=="NSE" or exchange=="BSE"):
+                        trading_symbol=chart_sym+"-EQ"
+                    message=place_order(user=User,ret="DAY",trading_symbol=trading_symbol, exch=str(exchange), discqty=int(float(obj.Quantity)*0.1),
                     transtype=transtype, prctyp="L", qty=str(obj.Quantity), symbol_id=token, price=obj.Limit, trigPrice=0, pCode="MIS", 
                     complexty="REGULAR")
+                    print("Message: ",message)
                     
-                    # print(User,"DAY",token, str(exchange), int(float(obj.Quantity)*0.1),
-                    # transtype, "L", str(obj.Quantity), token, obj.Limit, 0, "MIS", 
-                    # "REGULAR")
+                    print(User,"DAY",token, str(exchange), int(float(obj.Quantity)*0.1),
+                    transtype, "L", str(obj.Quantity), token, obj.Limit, 0, "MIS", 
+                    "REGULAR")
                     
                     if("NOrdNo:" in message):
 
@@ -162,6 +164,42 @@ class Buy_Symbols(APIView):
                         if(Order_status['Status']=="rejected"):
                             Status=str(Order_status['Status']+" "+Order_status['rejectionreason'])
                             Status = Status.replace("-","")
+                            # if("RMS" in Status):
+                            #     token=User.get_scrips(symbol=chart_sym, exchange=[exchange])[0]["symbol"]
+                            #     message=place_order(user=User,ret="DAY",trading_symbol=chart_sym, exch=str(exchange), discqty=int(float(obj.Quantity)*0.1),
+                            #     transtype=transtype, prctyp="L", qty=str(obj.Quantity), symbol_id=token, price=obj.Limit, trigPrice=0, pCode="MIS", 
+                            #     complexty="REGULAR")
+                            #     if("NOrdNo:" in message):
+                            #         orderNumber=int(message.split("NOrdNo:")[1])
+                            #         Order_status=dict(order_history(User,orderNumber)[0])
+                            #         if(Order_status['Status']=="rejected"):
+                            #             Status=str(Order_status['Status']+" "+Order_status['rejectionreason'])
+                            #             Status = Status.replace("-","")
+                            #             cancel_obj=CanceledOrders(Chart_Symbol=chart_sym,Quantity=obj.Quantity,
+                            #             Order_Number=orderNumber,status=Status,
+                            #             Execution_Time=str(Order_status['ExchTimeStamp']))
+                            #             cancel_obj.User=request.user
+                            #             cancel_obj.save()
+                            #             return Response({
+                            #                 'Status': '200',
+                            #                 'Message': Status
+                            #             }, status=status.HTTP_201_CREATED)
+                                
+                            #     else:
+                            #             Status=str(Order_status['Status'])
+                            #             Status = Status.replace("-","")
+                            #             open_obj=OpenOrders(Buy_price=int(obj.Limit),Terminal_Symbol=obj.Terminal_Symbol,Quatity=int(obj.Quantity),Order_Number=orderNumber,
+                            #             Status=str(Order_status['Status'],Exchange=exchange)
+                            #             )
+                            #             open_obj.User=request.user
+                            #             open_obj.save()
+                            #             Symbols_obj.delete()
+                            #             return Response({
+                            #                                     'Status': '200',
+                            #                                     'Message': Status
+                            #             }, status=status.HTTP_201_CREATED)
+
+                            # else:
                             cancel_obj=CanceledOrders(Chart_Symbol=chart_sym,Quantity=obj.Quantity,
                             Order_Number=orderNumber,status=Status,
                             Execution_Time=str(Order_status['ExchTimeStamp']))
@@ -174,8 +212,8 @@ class Buy_Symbols(APIView):
                         else:
                             Status=str(Order_status['Status'])
                             Status = Status.replace("-","")
-                            open_obj=OpenOrders(Buy_price=int(obj.Limit),Terminal_Symbol=obj.Terminal_Symbol,Quatity=int(obj.Quantity),Order_Number=orderNumber,
-                            Status=str(Order_status['Status'],Exchange=exchange)
+                            open_obj=OpenOrders(Chart_Symbol=str(chart_sym),Buy_price=int(obj.Limit),Terminal_Symbol=obj.Terminal_Symbol,Quatity=int(obj.Quantity),Order_Number=orderNumber,
+                            Status=str(Order_status['Status']),Exchange=exchange
                                 )
                             open_obj.User=request.user
                             open_obj.save()
@@ -356,6 +394,7 @@ class Buy_Sell(APIView):
 
                 print("Order placed")
 
+                
                 if("NOrdNo:" in     message):
                     orderNumber=int(message.split("NOrdNo:")[1])
                     Order_status=dict(order_history(User,orderNumber)[0])
@@ -372,7 +411,7 @@ class Buy_Sell(APIView):
                     else:
                             Status=str(Order_status['Status'])
                             Status = Status.replace("-","")
-                            open_obj=OpenOrders(Buy_price=int(price),Quatity=int(Quantity),Terminal_Symbol="NULL",Order_Number=orderNumber,
+                            open_obj=OpenOrders(Chart_Symbol=chart_sym,Buy_price=int(price),Quatity=int(Quantity),Terminal_Symbol="NULL",Order_Number=orderNumber,
                             Status=str(Order_status['Status'],Exchange=exchange)
                                 )
                             open_obj.User=request.user

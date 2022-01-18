@@ -111,11 +111,11 @@ DATABASES = {
 
 # DATABASES= {
 #     'default': 
-#         {   'ENGINE': 'djongo', 
-#             'NAME': 'RoboTrader', 
-#             'CLIENT': 
+#         {   "ENGINE": "djongo", 
+#             "NAME": "RoboTrader", 
+#             "CLIENT": 
 #                 {
-#                 'host': 'mongodb+srv://admin:Harish355_2021@robotrader.ztdth.mongodb.net/test?authSource=admin&replicaSet=atlas-i19lux-shard-0&readPreference=primary&ssl=true'
+#                 "host": "mongodb+srv://admin:Harish355_2021@robotrader.ztdth.mongodb.net/test"#?authSource=admin&replicaSet=atlas-i19lux-shard-0&readPreference=primary&ssl=true"
 #                 }
 #         }
 # }
