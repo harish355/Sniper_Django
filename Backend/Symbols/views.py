@@ -74,6 +74,21 @@ class Symbols_watch_list(APIView):
                        'Status': '400',
                         'Message': str(e)
                    }, status=status.HTTP_400_BAD_REQUEST)
+            # try:
+            #     mwname=Api_object.MWN
+            #     if(mwname =="None"):
+            #         return Response({
+            #            'Status': '400',
+            #             'Message': "Please Login with Zebul and Try Again"
+            #        }, status=status.HTTP_400_BAD_REQUEST)
+                
+            #     resp=dict(addscrips(User,mwname,exchange,token))
+
+            # except Exception as e:
+            #     return Response({
+            #            'Status': '400',
+            #             'Message': str(e)
+            #     }, status=status.HTTP_400_BAD_REQUEST)
 
             saved_obj=serializer_obj.save()
             saved_obj.User=request.user
@@ -188,7 +203,7 @@ class Buy_Symbols(APIView):
                             #     else:
                             #             Status=str(Order_status['Status'])
                             #             Status = Status.replace("-","")
-                            #             open_obj=OpenOrders(Buy_price=int(obj.Limit),Terminal_Symbol=obj.Terminal_Symbol,Quatity=int(obj.Quantity),Order_Number=orderNumber,
+                            #             open_obj=OpenOrders(Buy_price=int(obj.Limit),Terminal_Symbol=obj.Terminal_Symbol,Quantity=int(obj.Quantity),Order_Number=orderNumber,
                             #             Status=str(Order_status['Status'],Exchange=exchange)
                             #             )
                             #             open_obj.User=request.user
@@ -212,7 +227,7 @@ class Buy_Symbols(APIView):
                         else:
                             Status=str(Order_status['Status'])
                             Status = Status.replace("-","")
-                            open_obj=OpenOrders(Chart_Symbol=str(chart_sym),Buy_price=int(obj.Limit),Terminal_Symbol=obj.Terminal_Symbol,Quatity=int(obj.Quantity),Order_Number=orderNumber,
+                            open_obj=OpenOrders(Chart_Symbol=str(chart_sym),Buy_price=int(obj.Limit),Terminal_Symbol=obj.Terminal_Symbol,Quantity=int(obj.Quantity),Order_Number=orderNumber,
                             Status=str(Order_status['Status']),Exchange=exchange
                                 )
                             open_obj.User=request.user
@@ -341,7 +356,7 @@ class Buy_Sell(APIView):
                         else:
                             Status=str(Order_status['Status'])
                             Status = Status.replace("-","")
-                            open_obj=OpenOrders(Buy_price=int(price),Quatity=int(Quantity),Terminal_Symbol="NULL",Order_Number=orderNumber,
+                            open_obj=OpenOrders(Buy_price=int(price),Quantity=int(Quantity),Terminal_Symbol="NULL",Order_Number=orderNumber,
                             Status=str(Order_status['Status'],Exchange=exchange)
                                 )
                             open_obj.User=request.user
@@ -411,7 +426,7 @@ class Buy_Sell(APIView):
                     else:
                             Status=str(Order_status['Status'])
                             Status = Status.replace("-","")
-                            open_obj=OpenOrders(Chart_Symbol=chart_sym,Buy_price=int(price),Quatity=int(Quantity),Terminal_Symbol="NULL",Order_Number=orderNumber,
+                            open_obj=OpenOrders(Chart_Symbol=chart_sym,Buy_price=int(price),Quantity=int(Quantity),Terminal_Symbol="NULL",Order_Number=orderNumber,
                             Status=str(Order_status['Status'],Exchange=exchange)
                                 )
                             open_obj.User=request.user

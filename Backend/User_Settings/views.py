@@ -98,6 +98,12 @@ class User_Api_SessionId(APIView):
             api_obj=Api_table.objects.get(User=request.user)
             user=get_user(api_obj.userid,api_obj.api_key)
             Session_id=user.getEncryptionKey()
+            if(api_obj.MWN=="None"):
+                Market_List=dict(getmarketwatch_list(user))
+                api_obj.MWN=list(Market_List['values'])[1]
+                api_obj.save()
+
+            
             if("Please login" in Session_id):
                 return Response({
                 "Status":"300",
@@ -108,18 +114,24 @@ class User_Api_SessionId(APIView):
                 return Response({
                     "Status":"200",
                     "User_id":str(api_obj.userid),
-                    "Session":str(Session_id)
+                    "Session":str(Session_id),
+                    "MWN":str(api_obj.MWN)
                 }, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({
                 "Message":str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
-
     def get(self,request):
         try:
             api_obj=Api_table.objects.get(User=request.user)
             user=get_user(api_obj.userid,api_obj.api_key)
             Session_id=user.getEncryptionKey()
+            if(api_obj.MWN=="None"):
+                Market_List=dict(getmarketwatch_list(user))
+                api_obj.MWN=list(Market_List['values'])[1]
+                api_obj.save()
+
+            
             if("Please login" in Session_id):
                 return Response({
                 "Status":"300",
@@ -130,7 +142,8 @@ class User_Api_SessionId(APIView):
                 return Response({
                     "Status":"200",
                     "User_id":str(api_obj.userid),
-                    "Session":str(Session_id)
+                    "Session":str(Session_id),
+                    "MWN":str(api_obj.MWN)
                 }, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({

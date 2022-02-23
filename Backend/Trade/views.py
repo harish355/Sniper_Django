@@ -13,6 +13,9 @@ from CloseOrder.models import CloseOrders
 from zebullconnect.zebullapi import Zebullapi
 from Register.models import Account
 
+import traceback
+
+
 Market_Choice = {
     "1": "NSE",
     "2": "BSE",
@@ -43,6 +46,8 @@ class Desktop_Trade(APIView):
                             print(token)
                             if(exchange=="NSE" or exchange=="BSE"):
                                 trading_symbol=obj.Chart_Symbol+"-EQ"
+                            else:
+                                trading_symbol=obj.Chart_Symbol
                             if("BUY" in order_type):
                                 message=place_order(user=User,ret="DAY",trading_symbol=trading_symbol, exch=str(exchange), discqty=int(float(obj.Quantity)*0.1),
                                 transtype="BUY", prctyp="L", qty=str(obj.Quantity), symbol_id=token, price=value, trigPrice="0", pCode="MIS", 
@@ -52,15 +57,14 @@ class Desktop_Trade(APIView):
                                 message=place_order(user=User,ret="DAY",trading_symbol=trading_symbol, exch=str(exchange), discqty=str(obj.Quantity),
                                 transtype="SELL", prctyp="L", qty=str(obj.Quantity), symbol_id=token, price=value, trigPrice="0", pCode="MIS", 
                                 complexty="REGULAR")
-                            
+ 
                             if("NOrdNo:" in message):
-
                                 orderNumber=int(message.split("NOrdNo:")[1])
                                 Order_status=dict(order_history(User,orderNumber)[0])
 
-                                if(Order_status['Status']=="rejected"):
+                                if("rejected" in Order_status['Status']):
                                     Status=str(Order_status['Status']+" "+Order_status['rejectionreason'])
-                                    cancel_obj=CanceledOrders(Chart_Symbol=obj.Chart_Symbol,Quantity=obj.Quantity,
+                                    cancel_obj=CanceledOrders(Chart_Symbol=trading_symbol,Quantity=obj.Quantity,
                                     Order_Number=orderNumber,status=Status,
                                     Execution_Time=str(Order_status['ExchTimeStamp']))
                                     cancel_obj.User=user
@@ -72,12 +76,14 @@ class Desktop_Trade(APIView):
                                     return Response(Resp, status=status.HTTP_201_CREATED)
                                 else:
                                     Status=str(Order_status['Status'])
-                                    open_obj=OpenOrders(Buy_price=int(obj.Limit),Terminal_Symbol=obj.Terminal_Symbol,Quatity=int(obj.Quantity),Order_Number=orderNumber,
-                                    Status=str(Order_status['Status'],Exchange=exchange)
-                                        )
+                                    open_obj=OpenOrders(Buy_price=float(obj.Limit),Chart_Symbol=trading_symbol,Token_id=token,
+                                    Terminal_Symbol=obj.Terminal_Symbol,Quantity=int(obj.Quantity),Order_Number=orderNumber,
+                                    Status=str(Order_status['Status']),Exchange=exchange,
+                                    Execution_Time=str(Order_status['ExchTimeStamp']))
+                                        
                                     open_obj.User=user
                                     open_obj.save()
-                                    Symbols_obj.delete()
+                                    # Symbols_obj.delete()
                                     Resp = {
                                     'Status': '200',
                                     'Message': Status
@@ -99,47 +105,64 @@ class Desktop_Trade(APIView):
                             if(o_obj.Terminal_Symbol==token_name):
                                 Api_object=Api_table.objects.get(User=user)
                                 User=get_user(Api_object.userid,Api_object.api_key)
-                                exchange=Market_Choice[o_obj.Market]
-                                if("SUCCESS" in str(o_obj.Status).upper()):
-                                    msg=squareoff_positions(user=User,exchange=o_obj.Exchange,symbol=o_obj.Chart_Symbol,
-                                    qty=o_obj.Quantity,pCode="L",
-                                    tokenno=o_obj.Token_id)
-                                    Curr_price=user.scrips_details(exchange=exchange, token=o_obj.Token_id)['LTP']
-                                    msg=dict(msg)
-                                    if(msg['stat']=='Ok' or msg['stat']=='ok'):
-                                        if("NOrdNo" in msg.keys()):
-                                            orderNumber=msg['NOrdNo']
-                                            Order_status=dict(order_history(User,orderNumber)[0])
-                                            if(Order_status['Status']=="rejected"):
-                                                Status=str(Order_status['Status']+" "+Order_status['rejectionreason'])
-                                                Status = Status.replace("-","")
-                                                cancel_obj=CanceledOrders(Chart_Symbol=o_obj.chart_sym,Quantity=o_obj.Quantity,
-                                                Order_Number=orderNumber,status=Status,
-                                                Execution_Time=str(Order_status['ExchTimeStamp']))
-                                                cancel_obj.User=user
-                                                cancel_obj.save()
-                                                Resp = {
+                                exchange=o_obj.Exchange
+                                if(exchange=="NSE" or exchange=="BSE"):
+                                    trading_symbol=o_obj.Chart_Symbol+"-EQ"
+                                else:
+                                    trading_symbol=o_obj.Chart_Symbol
+                                if("SUCCESS" in str(o_obj.Status).upper() or "COMPLETE" in str(o_obj.Status).upper()):
+                                    if("BUY" in order_type):
+                                        transtype="SELL"
+                                    else:
+                                        transtype="BUY"
+                                    if(value==0):
+                                        prctyp="MKT"
+                                    else:
+                                        prctyp="L"
+                                    print("Day",o_obj.Chart_Symbol, exchange, int(o_obj.Quantity)*0.1,
+                                    transtype, prctyp, o_obj.Quantity, o_obj.Token_id, value, 0,
+                                     "MIS", "REGULAR")
+                                    msg=place_order(user=User,ret="Day",trading_symbol=trading_symbol, exch=exchange, discqty=int(o_obj.Quantity*0.1),
+                                    transtype=transtype, prctyp=prctyp, qty=o_obj.Quantity, symbol_id=o_obj.Token_id, price=value, trigPrice=0,
+                                     pCode="MIS", complexty="REGULAR")
+                                    if(prctyp=="L"):
+                                        Curr_price=value
+                                    else:
+                                        Curr_price=scrips_details(user=User,exchange=exchange, token=o_obj.Token_id)['LTP']
+                                    if("NOrdNo:" in msg):
+                                        orderNumber=int(msg.split("NOrdNo:")[1])
+                                        Order_status=dict(order_history(User,orderNumber)[0])
+                                        if(Order_status['Status']=="rejected"):
+                                            Status=str(Order_status['Status']+" "+Order_status['rejectionreason'])
+                                            Status = Status.replace("-","")
+                                            cancel_obj=CanceledOrders(Chart_Symbol=trading_symbol,Quantity=o_obj.Quantity,
+                                            Order_Number=orderNumber,status=Status,
+                                            Execution_Time=str(Order_status['ExchTimeStamp']))
+                                            cancel_obj.User=user
+                                            cancel_obj.save()
+                                            Resp = {
                                                 'Status': '200',
                                                 'Message': Status
-                                                }
-                                                return Response(Resp, status=status.HTTP_201_CREATED)
-                                            else:
-                                                Status=str(Order_status['Status'])
-                                                Status = Status.replace("-","")
+                                            }
+                                            return Response(Resp, status=status.HTTP_201_CREATED)
+                                        else:
+                                            Status=str(Order_status['Status'])
+                                            Status = Status.replace("-","")
                                                 
-                                                profit=(float(Curr_price)-float(o_obj.value))*int(o_obj.Quantity)
-                                                Close_obj=CloseOrders(Buy_price=int(o_obj.value),Quatity=int(o_obj.Quantity),Order_Number=orderNumber,
-                                                Profit=profit,
-                                                Status=str(Order_status['Status'],Exchange=exchange)
-                                                    )
-                                                Close_obj.User=user
-                                                Close_obj.save()
-                                                Resp = {
-                                                'Status': '200',
-                                                'Message': Status
-                                                }
-                                                return Response(Resp, status=status.HTTP_201_CREATED)
+                                            profit=(float(Curr_price)-float(o_obj.Buy_price))*int(o_obj.Quantity)
+                                            Close_obj=CloseOrders(Buy_price=float(o_obj.Buy_price),Quantity=int(o_obj.Quantity),Order_Number=orderNumber,
+                                            Profit=profit,
+                                            Comment=Status,Execution_Time=str(Order_status['ExchTimeStamp']),Exit_at=float(Curr_price))
                                                 
+                                            Close_obj.User=user
+                                            Close_obj.save()
+                                            o_obj.delete()
+                                            Resp = {
+                                            'Status': '200',
+                                            'Message': Status
+                                            }
+                                            return Response(Resp, status=status.HTTP_201_CREATED)
+                             
                                     Resp = {
                                                     'Status': '200',
                                                     'Message': "Order Unsucessful"
@@ -147,29 +170,35 @@ class Desktop_Trade(APIView):
                                     return Response(Resp, status=status.HTTP_201_CREATED)
 
                                 elif("OPEN" in str(o_obj.Status).upper()):
-                                    msg=exitboorder(user=User,nestOrderNumber=o_obj.Order_Number,symbolOrderId=o_obj.Token_id,status="OPEN")
-                                    Curr_price=user.scrips_details(exchange=exchange, token=o_obj.Token_id)['LTP']
-                                    msg=dict(msg)
-                                    if(msg['stat']=='Ok' or msg['stat']=='ok'):
-                                        if("NOrdNo" in msg.keys()):
-                                            orderNumber=msg['NOrdNo']
-                                            Order_status=dict(order_history(User,orderNumber)[0])
-                                            if(Order_status['Status']=="rejected"):
-                                                Status=str(Order_status['Status']+" "+Order_status['rejectionreason'])
-                                                Status = Status.replace("-","")
-                                                cancel_obj=CanceledOrders(Chart_Symbol=o_obj.chart_sym,Quantity=o_obj.Quantity,
-                                                Order_Number=orderNumber,status=Status,
-                                                Execution_Time=str(Order_status['ExchTimeStamp']))
-                                                cancel_obj.User=user
-                                                cancel_obj.save() 
-                                                Resp = {
+                                    msg=cancel_order(user=User,exchange=exchange,nestordernmbr=o_obj.Order_Number,
+                                    tradingsymbol=trading_symbol)
+                                    print(msg)
+                                    # msg="{'stat': 'Ok', 'Result': ' NEST Order Number :220223000041190'}"
+                                    Curr_price=scrips_details(user=User,exchange=exchange, token=o_obj.Token_id)['LTP']
+                                    msg=str(msg)
+                                    if("NEST Order Number" in msg):
+                                        orderNumber=msg.split(":")
+                                        orderNumber=(orderNumber[-1]).split('}')
+                                        orderNumber=str(orderNumber[0]).replace("'","")
+                                        Order_status=dict(order_history(User,int(orderNumber))[0])
+                                        if(Order_status['Status']=="cancelled"):
+                                            Status=str(Order_status['Status'])
+                                            Status = Status.replace("-","")
+                                            cancel_obj=CanceledOrders(Chart_Symbol=trading_symbol,Quantity=o_obj.Quantity,
+                                            Order_Number=orderNumber,status=Status,
+                                            Execution_Time=str(Order_status['ExchTimeStamp']))
+                                            cancel_obj.User=user
+                                            cancel_obj.save() 
+                                            Resp = {
                                                         'Status': '200',
                                                         'Message': Status
-                                                        }
-                                                return Response(Resp, status=status.HTTP_201_CREATED)   
+                                                    }
+                                            return Response(Resp, status=status.HTTP_201_CREATED) 
+
+                                      
                                     return Response({
-                                        'Status':'200',
-                                        'Message': "Order UnSucessful"
+                                        'Status':'201',
+                                        'Message': "Order Cancel was UnSucessful"
                                     }, status=status.HTTP_201_CREATED)                               
             
                                 else:
@@ -185,6 +214,12 @@ class Desktop_Trade(APIView):
                                     'Message': "There is no Postion to exit"
                                 }
                                 return Response(Resp, status=status.HTTP_201_CREATED)
+                        Resp = {
+                                            'Status': '200',
+                                            'Message': "Order Not Found in Open Order"
+                                            
+                                        }
+                        return Response(Resp, status=status.HTTP_201_CREATED)  
 
             else:
                 Resp = {
@@ -194,8 +229,9 @@ class Desktop_Trade(APIView):
                 return Response(Resp, status=status.HTTP_201_CREATED)
                 
         except Exception as e:
+            print(traceback.format_exc())
             return Response({
-                "Status":400,
+                "Status":401,
                 "Message":str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 

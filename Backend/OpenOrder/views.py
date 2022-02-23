@@ -1,3 +1,4 @@
+import re
 from django.http import JsonResponse
 from .models import OpenOrders
 from .serializers import OpenOrderSerializer, CloseOrderSerializer
@@ -22,6 +23,7 @@ class OpenOrderList(APIView):
 class Cancel_open_order(APIView):
     permission_classes = (IsAuthenticated,)
     def post(self, request):
+        print(request.data)
         try:
             Order_Number=request.data['Order_Number']
         except:

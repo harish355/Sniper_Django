@@ -14,7 +14,7 @@ class Symbols(models.Model):
     Chart_Symbol = models.CharField(max_length=32)
     Token_id=models.CharField(max_length=32,null=True)
     Terminal_Symbol = models.CharField(max_length=32)
-    Stoploss = models.IntegerField()
+    Stoploss = models.FloatField()
     Limit = models.FloatField()
     Quantity = models.IntegerField()
     User = models.ForeignKey(Account, on_delete=models.CASCADE,null=True)
