@@ -12,7 +12,10 @@ def place_order(user,ret,trading_symbol, exch, discqty, transtype, prctyp, qty, 
         placeorderresp = user.place_order(complexty=complexty, exch=exch, pCode=pCode, price=price, qty=qty, prctyp=prctyp,
                                           ret=ret, trading_symbol=trading_symbol, transtype=transtype, trigPrice=trigPrice, symbol_id=symbol_id, discqty=discqty)
         print(placeorderresp)
-        return "NOrdNo: "+str(placeorderresp[0]['NOrdNo'])
+        if("NOrdNo" in str(placeorderresp)):
+            return "NOrdNo: "+str(placeorderresp[0]['NOrdNo'])
+        else:
+            return str(placeorderresp[0]['Emsg'])
     else:
         return "User not logged in"
 

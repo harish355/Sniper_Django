@@ -106,10 +106,7 @@ class Desktop_Trade(APIView):
                                 Api_object=Api_table.objects.get(User=user)
                                 User=get_user(Api_object.userid,Api_object.api_key)
                                 exchange=o_obj.Exchange
-                                if(exchange=="NSE" or exchange=="BSE"):
-                                    trading_symbol=o_obj.Chart_Symbol+"-EQ"
-                                else:
-                                    trading_symbol=o_obj.Chart_Symbol
+                                trading_symbol=o_obj.Chart_Symbol
                                 if("SUCCESS" in str(o_obj.Status).upper() or "COMPLETE" in str(o_obj.Status).upper()):
                                     if("BUY" in order_type):
                                         transtype="SELL"
@@ -119,7 +116,7 @@ class Desktop_Trade(APIView):
                                         prctyp="MKT"
                                     else:
                                         prctyp="L"
-                                    print("Day",o_obj.Chart_Symbol, exchange, int(o_obj.Quantity)*0.1,
+                                    print("Day",o_obj.Chart_Symbol, exchange, int(o_obj.Quantity*0.1),
                                     transtype, prctyp, o_obj.Quantity, o_obj.Token_id, value, 0,
                                      "MIS", "REGULAR")
                                     msg=place_order(user=User,ret="Day",trading_symbol=trading_symbol, exch=exchange, discqty=int(o_obj.Quantity*0.1),
@@ -129,7 +126,7 @@ class Desktop_Trade(APIView):
                                         Curr_price=value
                                     else:
                                         Curr_price=scrips_details(user=User,exchange=exchange, token=o_obj.Token_id)['LTP']
-                                    if("NOrdNo:" in msg):
+                                    if("NOrdNo:" in str(msg)):
                                         orderNumber=int(msg.split("NOrdNo:")[1])
                                         Order_status=dict(order_history(User,orderNumber)[0])
                                         if(Order_status['Status']=="rejected"):
@@ -140,6 +137,7 @@ class Desktop_Trade(APIView):
                                             Execution_Time=str(Order_status['ExchTimeStamp']))
                                             cancel_obj.User=user
                                             cancel_obj.save()
+                                            o_obj.delete()
                                             Resp = {
                                                 'Status': '200',
                                                 'Message': Status
@@ -150,6 +148,8 @@ class Desktop_Trade(APIView):
                                             Status = Status.replace("-","")
                                                 
                                             profit=(float(Curr_price)-float(o_obj.Buy_price))*int(o_obj.Quantity)
+                                            if(transtype=="BUY"):
+                                                profit=profit*-1
                                             Close_obj=CloseOrders(Buy_price=float(o_obj.Buy_price),Quantity=int(o_obj.Quantity),Order_Number=orderNumber,
                                             Profit=profit,
                                             Comment=Status,Execution_Time=str(Order_status['ExchTimeStamp']),Exit_at=float(Curr_price))
@@ -189,6 +189,7 @@ class Desktop_Trade(APIView):
                                             Execution_Time=str(Order_status['ExchTimeStamp']))
                                             cancel_obj.User=user
                                             cancel_obj.save() 
+                                            o_obj.delete()
                                             Resp = {
                                                         'Status': '200',
                                                         'Message': Status
