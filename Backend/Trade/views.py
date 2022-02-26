@@ -76,7 +76,10 @@ class Desktop_Trade(APIView):
                                     return Response(Resp, status=status.HTTP_201_CREATED)
                                 else:
                                     Status=str(Order_status['Status'])
-                                    open_obj=OpenOrders(Buy_price=float(obj.Limit),Chart_Symbol=trading_symbol,Token_id=token,
+                                    if(int(value)==0):
+                                        value=scrips_details(user=User,exchange=exchange, token=o_obj.Token_id)['LTP']
+                                    
+                                    open_obj=OpenOrders(Buy_price=float(value),Chart_Symbol=trading_symbol,Token_id=token,
                                     Terminal_Symbol=obj.Terminal_Symbol,Quantity=int(obj.Quantity),Order_Number=orderNumber,
                                     Status=str(Order_status['Status']),Exchange=exchange,
                                     Execution_Time=str(Order_status['ExchTimeStamp']))
@@ -150,8 +153,8 @@ class Desktop_Trade(APIView):
                                             profit=(float(Curr_price)-float(o_obj.Buy_price))*int(o_obj.Quantity)
                                             if(transtype=="BUY"):
                                                 profit=profit*-1
-                                            Close_obj=CloseOrders(Buy_price=float(o_obj.Buy_price),Quantity=int(o_obj.Quantity),Order_Number=orderNumber,
-                                            Profit=profit,
+                                            Close_obj=CloseOrders(Chart_Symbol=o_obj.Chart_Symbol,Buy_price=float(o_obj.Buy_price),Quantity=int(o_obj.Quantity),Order_Number=orderNumber,
+                                            Profit=profit,ClosePrice=float(Curr_price),
                                             Comment=Status,Execution_Time=str(Order_status['ExchTimeStamp']),Exit_at=float(Curr_price))
                                                 
                                             Close_obj.User=user
