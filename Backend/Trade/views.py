@@ -77,7 +77,7 @@ class Desktop_Trade(APIView):
                                 else:
                                     Status=str(Order_status['Status'])
                                     if(int(value)==0):
-                                        value=scrips_details(user=User,exchange=exchange, token=o_obj.Token_id)['LTP']
+                                        value=scrips_details(user=User,exchange=exchange, token=obj.Token_id)['LTP']
                                     
                                     open_obj=OpenOrders(Buy_price=float(value),Chart_Symbol=trading_symbol,Token_id=token,
                                     Terminal_Symbol=obj.Terminal_Symbol,Quantity=int(obj.Quantity),Order_Number=orderNumber,
